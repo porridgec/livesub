@@ -15,5 +15,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        env:
+          # GitHub Linux runner 可能带 nvcc，onnxruntime-node 会去下 404 的 CUDA 包
+          ONNXRUNTIME_NODE_INSTALL_CUDA: skip
       - run: npx tsc --noEmit
       - run: npm audit --audit-level=high
