@@ -1,0 +1,11 @@
+node_modules/
+dist/
+models/
+test/media/
+test/artifacts/
+.browser/
+.bench/
+.zcode/
+.DS_Store
+*.log
+*.tsbuildinfo

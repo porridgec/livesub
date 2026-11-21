@@ -1,0 +1,52 @@
+{
+  "name": "livesub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "LiveSub — 实时双语字幕 Chrome 扩展：本地 SenseVoice/Whisper 识别 + 本地翻译，字幕覆盖到视频上",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "watch": "vite build --watch",
+    "fetch-models": "node scripts/fetch-models.mjs",
+    "make-test-media": "bash scripts/make-test-media.sh",
+    "e2e": "node scripts/dev-e2e.mjs --lang ja --dur 90",
+    "e2e:en": "node scripts/dev-e2e.mjs --lang en --dur 90",
+    "e2e:hotkey": "node scripts/dev-e2e.mjs --lang ja --mode hotkey --dur 90",
+    "e2e:element": "node scripts/dev-e2e.mjs --lang ja --mode element --dur 90",
+    "typecheck": "tsc --noEmit",
+    "audit": "npm audit --audit-level=high"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.7.6",
+    "onnxruntime-web": "1.22.0-dev.20250409-89f8206ba4"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.304",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-static-copy": "^2.3.1"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/porridgec/livesub.git"
+  },
+  "homepage": "https://github.com/porridgec/livesub",
+  "bugs": {
+    "url": "https://github.com/porridgec/livesub/issues"
+  },
+  "author": "porridgec",
+  "keywords": [
+    "chrome-extension",
+    "subtitles",
+    "asr",
+    "speech-recognition",
+    "sensevoice",
+    "whisper",
+    "translation",
+    "local-first"
+  ],
+  "overrides": {
+    "sharp": "^0.35.5"
+  }
+}

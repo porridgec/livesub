@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LiveSub 设置</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main>
+      <h1>LiveSub 设置</h1>
+      <p class="hint">所有设置即时生效：字幕样式会实时同步到正在播放的页面；换模型/语言需要重新点「开始字幕」。</p>
+
+      <section>
+        <h2>识别</h2>
+        <label class="row">
+          <span>识别语言</span>
+          <select id="lang">
+            <option value="auto">自动检测（按音频判断）</option>
+            <option value="ja">日语</option>
+            <option value="en">英语</option>
+            <option value="zh">中文（只显示原文）</option>
+          </select>
+        </label>
+        <label class="row">
+          <span>Whisper 模型</span>
+          <select id="asr-model">
+            <option value="sensevoice">SenseVoice（推荐 · 日文准、快）</option>
+            <option value="base">Whisper base（更轻 · 日文一般）</option>
+            <option value="tiny">Whisper tiny（最轻 · 最快）</option>
+          </select>
+        </label>
+        <label class="row">
+          <span>断句灵敏度</span>
+          <input type="range" id="vad" min="1" max="5" step="1" />
+          <b id="vad-val"></b>
+        </label>
+        <p class="hint">值越大越容易触发断句（小声说话建议调高，背景音乐嘈杂建议调低）。</p>
+      </section>
+
+      <section>
+        <h2>字幕显示</h2>
+        <label class="row">
+          <span>显示模式</span>
+          <select id="subtitle-mode">
+            <option value="bilingual">双语（原文 + 中文）</option>
+            <option value="original">仅原文</option>
+            <option value="translated">仅中文</option>
+          </select>
+        </label>
+        <label class="row">
+          <span>字号</span>
+          <input type="range" id="font-scale" min="0.015" max="0.06" step="0.001" />
+          <b id="font-scale-val"></b>
+        </label>
+        <label class="row">
+          <span>离底部距离</span>
+          <input type="range" id="bottom-offset" min="0" max="0.3" step="0.01" />
+          <b id="bottom-offset-val"></b>
+        </label>
+        <label class="row">
+          <span>底色不透明度</span>
+          <input type="range" id="bg-opacity" min="0" max="0.95" step="0.05" />
+          <b id="bg-opacity-val"></b>
+        </label>
+        <label class="row">
+          <span>同屏组数</span>
+          <select id="max-lines">
+            <option value="1">1 组</option>
+            <option value="2">2 组</option>
+            <option value="3">3 组</option>
+          </select>
+        </label>
+      </section>
+
+      <section>
+        <h2>预览</h2>
+        <div id="preview">
+          <div id="preview-stage">
+            <div id="preview-panel">
+              <div class="p-orig">Language learning is a long journey, but every small step counts.</div>
+              <div class="p-trans">语言学习是一段漫长的旅程，但每一小步都很重要。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button id="reset">恢复默认</button>
+        <span id="saved" class="hint"></span>
+      </div>
+    </main>
+
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>

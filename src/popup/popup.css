@@ -1,0 +1,178 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 340px;
+  margin: 0;
+  padding: 12px;
+  font: 13px/1.5 -apple-system, 'PingFang SC', sans-serif;
+  background: #1b1d21;
+  color: #e6e8eb;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.badge.idle {
+  background: #3a3f47;
+  color: #aab2bd;
+}
+
+.badge.loading-model {
+  background: #4a3a17;
+  color: #f0c674;
+}
+
+.badge.capturing {
+  background: #16391f;
+  color: #7ee29a;
+}
+
+.badge.error {
+  background: #46201f;
+  color: #ff9d97;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.row > span:first-child {
+  flex: 1;
+}
+
+button {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid #3a3f47;
+  border-radius: 8px;
+  background: #26292f;
+  color: #e6e8eb;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primary:not(:disabled) {
+  background: #2f6f3e;
+  border-color: #3f8f52;
+}
+
+select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #3a3f47;
+  background: #26292f;
+  color: #e6e8eb;
+}
+
+#meter {
+  height: 6px;
+  border-radius: 3px;
+  background: #26292f;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+#meter i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #3f8f52, #f0c674);
+  transition: width 0.1s linear;
+}
+
+#lines {
+  max-height: 168px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+#lines.empty {
+  color: #6b7280;
+  font-size: 12px;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.line .orig {
+  color: #e6e8eb;
+}
+
+.line .trans {
+  color: #9fd5ae;
+}
+
+.line .meta {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+#stats {
+  font-size: 11px;
+  color: #9aa3af;
+}
+
+footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+}
+
+footer a {
+  color: #7ab8ff;
+  text-decoration: none;
+}
+
+#engine {
+  color: #6b7280;
+}
+
+#detected {
+  color: #9aa3af;
+}
+
+.hint {
+  font-size: 11px;
+  color: #f0c674;
+  background: #2b2416;
+  border: 1px solid #4a3a17;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+}
+
+.hidden {
+  display: none !important;
+}

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LiveSub 端到端测试页</title>
+    <style>
+      body {
+        font: 14px/1.6 -apple-system, 'PingFang SC', sans-serif;
+        max-width: 860px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      video {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        object-fit: contain;
+        background: #000;
+        border-radius: 8px;
+      }
+      .hint {
+        color: #666;
+        font-size: 13px;
+      }
+      .bar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 8px 0 16px;
+        flex-wrap: wrap;
+      }
+      button {
+        font: inherit;
+        padding: 6px 12px;
+        border: 1px solid #bbb;
+        border-radius: 6px;
+        background: #f5f5f5;
+        cursor: pointer;
+      }
+      li {
+        margin: 4px 0;
+      }
+      .col {
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>LiveSub 测试页</h1>
+    <p class="hint">
+      先执行 <code>npm run make-test-media</code> 生成音频。播放后点击扩展图标 →「开始字幕」。
+      预期：popup 电平表跳动 → 数秒后视频上出现原文字幕 → 随后补上中文译文。
+    </p>
+
+    <div class="bar">
+      <button id="fs">全屏测试</button>
+      <button id="exit-fs">退出全屏</button>
+      <span class="hint" id="fs-state"></span>
+    </div>
+
+    <section class="col">
+      <h3>英语（预期识别）</h3>
+      <video id="en" controls src="media/en.m4a"></video>
+      <ul>
+        <li>Language learning is a long journey, but every small step counts.</li>
+        <li>Practice a little bit every day.</li>
+      </ul>
+    </section>
+
+    <section class="col">
+      <h3>日语（预期识别）</h3>
+      <video id="ja" controls src="media/ja.m4a"></video>
+      <ul>
+        <li>今日はとても良い天気ですね。</li>
+        <li>一緒に散歩しませんか。</li>
+      </ul>
+    </section>
+
+    <script>
+      // 全屏测试按钮：点击手势在页面内完成 requestFullscreen，自动化脚本可以真实触发
+      document.getElementById('fs').addEventListener('click', () => {
+        const vids = [...document.querySelectorAll('video')]
+        const v = vids.find((x) => !x.paused) || vids[0]
+        if (v) v.requestFullscreen().catch((e) => (document.getElementById('fs-state').textContent = '失败: ' + e.message))
+      })
+      document.getElementById('exit-fs').addEventListener('click', () => {
+        if (document.fullscreenElement) document.exitFullscreen()
+      })
+      document.addEventListener('fullscreenchange', () => {
+        document.getElementById('fs-state').textContent = document.fullscreenElement ? '全屏中' : ''
+      })
+    </script>
+  </body>
+</html>

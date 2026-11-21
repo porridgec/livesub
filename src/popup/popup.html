@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>LiveSub</h1>
+      <span id="state" class="badge idle">空闲</span>
+    </header>
+
+    <div class="row">
+      <button id="start" class="primary">▶ 开始字幕</button>
+      <button id="stop" disabled>■ 停止</button>
+    </div>
+
+    <div id="hint" class="hint hidden"></div>
+
+    <label class="row">
+      <span>识别语言</span>
+      <select id="lang">
+        <option value="auto">自动检测</option>
+        <option value="ja">日语</option>
+        <option value="en">英语</option>
+        <option value="zh">中文</option>
+      </select>
+    </label>
+
+    <div id="meter"><i id="meter-bar"></i></div>
+
+    <div id="lines" class="empty">开始后识别结果会显示在这里</div>
+
+    <div id="stats" title="识别耗时 / 话语结束→译文上屏 延迟">延迟 —</div>
+
+    <footer>
+      <a href="#" id="open-options">设置</a>
+      <span id="detected"></span>
+      <span id="audio"></span>
+      <span id="engine"></span>
+    </footer>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>
