@@ -184,6 +184,11 @@ sherpa-onnx 官方 CLI 基本一致（`scripts/sensevoice-frontend.mjs`），因
 另外已启用的优化：manifest 里加了 COOP/COEP，扩展页 `crossOriginIsolated=true`，
 ort-web 用 4 个 WASM 线程，Whisper base 在浏览器里从 ~2.9s 降到 ~1.1s。
 
+## 同类项目
+
+和 LiveSub 做类似事情的项目、各自的取舍，以及我们的定位，见
+[docs/landscape.md](docs/landscape.md)（Tomoru / v2s / LiveTranslate / vCaptions / Language Reactor 等）。
+
 ## 字幕系统架构
 
 学习 YouTube 两行滚动 / 词级时间、B 站 CTC + 动态解码器 + 热词的思路，LiveSub 把
