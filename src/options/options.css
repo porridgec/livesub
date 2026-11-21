@@ -38,6 +38,18 @@ h2 {
   flex: 0 0 110px;
 }
 
+textarea {
+  flex: 1;
+  min-height: 62px;
+  resize: vertical;
+  background: #1b1b1b;
+  color: inherit;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 8px;
+  font: inherit;
+}
+
 select,
 input[type='range'] {
   flex: 1;

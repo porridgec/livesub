@@ -181,12 +181,13 @@ function applyLfr(flat: Float32Array, frames: number): { data: Float32Array; out
   return { data: out, outFrames, odim }
 }
 
-function argmaxDecode(logits: ort.Tensor, vocab: number): number[] {
+function argmaxDecode(logits: ort.Tensor, vocab: number): { ids: number[]; frames: number[] } {
   const data = logits.data as Float32Array
   const dims = logits.dims
   const T = dims[dims.length - 2]
   const V = dims[dims.length - 1]
   const ids: number[] = []
+  const frames: number[] = []
   let prev = -1
   for (let t = 0; t < T; t++) {
     const base = t * V
@@ -199,11 +200,14 @@ function argmaxDecode(logits: ort.Tensor, vocab: number): number[] {
         best = v
       }
     }
-    if (best !== 0 && best !== prev) ids.push(best)
+    if (best !== 0 && best !== prev) {
+      ids.push(best)
+      frames.push(t)
+    }
     prev = best
   }
   void vocab
-  return ids
+  return { ids, frames }
 }
 
 /** 加载（或复用）SenseVoice 模型。onProgress 只传人类可读的加载阶段。 */
@@ -251,13 +255,13 @@ export function initSenseVoice(onProgress?: (detail: string) => void): Promise<s
 export async function transcribeSenseVoice(
   pcm: Float32Array,
   lang: string,
-): Promise<{ text: string; lang: string }> {
+): Promise<{ text: string; lang: string; words: { text: string; start: number; end: number }[] }> {
   if (!session) throw new Error('SenseVoice 未初始化')
-  if (pcm.length < FRAME_LEN) return { text: '', lang: '' }
+  if (pcm.length < FRAME_LEN) return { text: '', lang: '', words: [] }
   const scaled = new Float32Array(pcm.length)
   for (let i = 0; i < pcm.length; i++) scaled[i] = pcm[i] * 32768
   const fb = fbank(scaled)
-  if (fb.frames < LFR_M) return { text: '', lang: '' }
+  if (fb.frames < LFR_M) return { text: '', lang: '', words: [] }
   const lfr = applyLfr(fb.data, fb.frames)
   const langId = LANG_ID[lang] ?? LANG_ID.auto
   // ITN 对日语会把「ですね」拆成「で、すね」，所以只有英语用 ITN；其他语种关掉
@@ -271,13 +275,22 @@ export async function transcribeSenseVoice(
   const out = await runExclusive(() => session!.run(feeds))
   const logits = out.logits
   const vocab = logits.dims[logits.dims.length - 1]
-  const ids = argmaxDecode(logits, vocab)
-  if (!ids.length) return { text: '', lang: '' }
+  const decoded = argmaxDecode(logits, vocab)
+  const ids = decoded.ids
+  if (!ids.length) return { text: '', lang: '', words: [] }
 
   const langTok = tokensById[ids[0]] ?? ''
   const m = /^<\|([a-z]{2})\|>$/.exec(langTok)
   const detected = m ? m[1] : lang !== 'auto' ? lang : ''
-  if (langTok.includes('nospeech')) return { text: '', lang: detected }
+  if (langTok.includes('nospeech')) return { text: '', lang: detected, words: [] }
+
+  // CTC 输出帧 ≈ LFR_N × 10ms；给每个 token 一个 [start, end) 时间
+  const frameSec = (LFR_N * FRAME_SHIFT) / SR
+  const words = ids.slice(4).map((id, i) => ({
+    text: (tokensById[id] ?? '').replace(/▁/g, ' '),
+    start: +((decoded.frames[i + 4] ?? 0) * frameSec).toFixed(3),
+    end: +(((decoded.frames[i + 5] ?? lfr.outFrames) * frameSec).toFixed(3)),
+  }))
 
   // 前 4 个 token 是 language/emotion/event/text_norm query，后面对应正文
   let text = collapseRepeats(
@@ -290,5 +303,5 @@ export async function transcribeSenseVoice(
   text = tidyCjkSpaces(text)
   // 英语 ITN 关闭时首字母是小写，补一下观感
   if (detected === 'en') text = text.replace(/^([a-z])/, (m) => m.toUpperCase())
-  return { text: cleanTranscript(text), lang: detected }
+  return { text: cleanTranscript(text), lang: detected, words }
 }

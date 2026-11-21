@@ -24,6 +24,9 @@
   **SenseVoice（推荐，准且快）或 Whisper** 逐句识别；`自动检测` 语种
 - **边说边出双语临时字幕**：SenseVoice 每 ~0.8s 对当前这段音频出一次临时文本（原文 + 中文，淡色显示），
   说完后由正式句子替换；长句不用等到整段结束才看到字
+- **两行滚动窗口**：参考 YouTube，临时字幕占一个槽位，正式行最多 `maxLines-1` 条；partial 的稳定前缀正常显示，
+  尾部淡色，减少整行跳动
+- **术语表 / 纠错**：设置里每行 `错=对`，识别后、翻译前替换（人名、队名、专有名词）
 - 原文先上屏，中文译文随后补齐：
   - 英语 → `opus-mt-en-zh` 直译
   - 日语 → `opus-mt-ja-en` → `opus-mt-en-zh` 两段（没有现成的 opus-mt ja→zh；NLLB-600M 太重、实时不可用）
@@ -181,6 +184,12 @@ sherpa-onnx 官方 CLI 基本一致（`scripts/sensevoice-frontend.mjs`），因
 另外已启用的优化：manifest 里加了 COOP/COEP，扩展页 `crossOriginIsolated=true`，
 ort-web 用 4 个 WASM 线程，Whisper base 在浏览器里从 ~2.9s 降到 ~1.1s。
 
+## 字幕系统架构
+
+学习 YouTube 两行滚动 / 词级时间、B 站 CTC + 动态解码器 + 热词的思路，LiveSub 把
+「ASR 结果」与「字幕窗口」解耦，并加入 token 时间戳、稳定 partial、术语表。
+设计说明见 [docs/subtitle-architecture.md](docs/subtitle-architecture.md)。
+
 ## 平台字幕调研
 
 YouTube / Bilibili 自带字幕（人工 CC、YouTube Gemini 自动字幕、B站 AI 字幕）的接口、格式、
@@ -235,6 +244,8 @@ YouTube / Bilibili 自带字幕（人工 CC、YouTube Gemini 自动字幕、B站
 
 ## 变更记录
 
+- **0.4.0**：字幕系统架构调整——CTC token 时间戳、CaptionWindow 两行滚动/稳定 partial、术语表后处理；
+  设计说明见 `docs/subtitle-architecture.md`。
 - **0.3.1**：Silero VAD（静音判定 0.29s）+ 双语临时字幕（partial 也翻译）；ORT 调用串行化。
 - **0.3.0**：默认 ASR 换成 SenseVoiceSmall；边说边出临时字幕（0.8s 一次）；
   VAD 保持 0.6s/5s（实测更短的 0.45s/4s 会把句子切断、翻译明显变差）（ONNX/CTC + JS fbank 前端），Whisper 后备；COOP/COEP + 4 线程；

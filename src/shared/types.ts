@@ -22,6 +22,8 @@ export interface Settings {
   asrModel: AsrModel
   /** 1（最不敏感）~ 5（最敏感） */
   vadSensitivity: number
+  /** 术语表 / 纠错（每行一个，'错=对' 替换） */
+  glossary: string
   subtitleStyle: SubtitleStyle
 }
 
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
   subtitleMode: 'bilingual',
   asrModel: 'sensevoice',
   vadSensitivity: 3,
+  glossary: '',
   subtitleStyle: { fontScale: 0.028, bottomOffset: 0.14, bgOpacity: 0.6, maxLines: 2 },
 }
 

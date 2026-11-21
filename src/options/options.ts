@@ -7,6 +7,7 @@ const langSel = $('lang') as unknown as HTMLSelectElement
 const modelSel = $('asr-model') as unknown as HTMLSelectElement
 const vadRange = $('vad') as unknown as HTMLInputElement
 const vadVal = $('vad-val')
+const glossaryEl = $('glossary') as unknown as HTMLTextAreaElement
 const modeSel = $('subtitle-mode') as unknown as HTMLSelectElement
 const fontRange = $('font-scale') as unknown as HTMLInputElement
 const fontVal = $('font-scale-val')
@@ -28,6 +29,7 @@ function paint(): void {
   modelSel.value = settings.asrModel
   vadRange.value = String(settings.vadSensitivity)
   vadVal.textContent = String(settings.vadSensitivity)
+  glossaryEl.value = settings.glossary
   modeSel.value = settings.subtitleMode
   fontRange.value = String(settings.subtitleStyle.fontScale)
   fontVal.textContent = `${Math.round(settings.subtitleStyle.fontScale * 1000) / 10}%`
@@ -56,6 +58,7 @@ function readForm(): void {
   settings.sourceLang = langSel.value as Settings['sourceLang']
   settings.asrModel = modelSel.value as Settings['asrModel']
   settings.vadSensitivity = Number(vadRange.value)
+  settings.glossary = glossaryEl.value
   settings.subtitleMode = modeSel.value as Settings['subtitleMode']
   settings.subtitleStyle = {
     fontScale: Number(fontRange.value),
@@ -78,7 +81,7 @@ function save(): void {
   }, 150)
 }
 
-for (const el of [langSel, modelSel, vadRange, modeSel, fontRange, offsetRange, bgRange, maxLinesSel]) {
+for (const el of [langSel, modelSel, vadRange, glossaryEl, modeSel, fontRange, offsetRange, bgRange, maxLinesSel]) {
   el.addEventListener('input', save)
   el.addEventListener('change', save)
 }

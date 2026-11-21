@@ -5,7 +5,9 @@
 // - rAF 跟随 video 的 getBoundingClientRect（滚动/缩放/换清晰度重建都能跟上）
 // - 只在"正在播放/可见面积最大"的 video 上显示；找不到就隐藏
 // - 订阅 storage 设置，字号/位置/底色/行数/显示模式即时生效
-// 注意：本文件不允许任何运行时 import（content script 不能用 ES 模块），类型就地内联。
+// 注意：构建时会把本文件打成 IIFE，本地运行时 import 会被内联；不要在这里引用其他上下文。
+
+import { CaptionWindow } from './caption-window'
 
 interface StyleCfg {
   fontScale: number
@@ -15,13 +17,6 @@ interface StyleCfg {
 }
 
 type Mode = 'bilingual' | 'original' | 'translated'
-
-interface Line {
-  id: string
-  original: string
-  translated?: string
-  lang: string
-}
 
 const DEFAULT_STYLE: StyleCfg = { fontScale: 0.028, bottomOffset: 0.06, bgOpacity: 0.55, maxLines: 2 }
 const HOST_ID = 'livesub-subtitle-host'
@@ -34,9 +29,7 @@ const HOST_ID = 'livesub-subtitle-host'
 
   let style: StyleCfg = { ...DEFAULT_STYLE }
   let mode: Mode = 'bilingual'
-  let lines: Line[] = []
-  // 临时字幕（边说边出），正式句子到达后清掉
-  let partial: { text: string; translated?: string; lang: string } | null = null
+  const caption = new CaptionWindow()
   let running = false
 
   let host: HTMLDivElement | null = null
@@ -80,6 +73,7 @@ const HOST_ID = 'livesub-subtitle-host'
     .trans { color: #a9e8b6; font-size: .9em; }
     .trans:empty { display: none; }
     .partial { opacity: .72; }
+    .partial .tail { opacity: .5; }
     .hidden { display: none !important; }
   `
 
@@ -403,13 +397,15 @@ registerProcessor('livesub-pcm', PcmCollector)
   // ---------- 渲染 ----------
   function render(): void {
     if (!listEl || !host) return
+    const snap = caption.snapshot()
+    const partial = snap.partial
     const key =
-      `${mode}|${style.maxLines}|p:${partial?.text ?? ''}:${partial?.translated?.length ?? 0}|` +
-      lines.map((l) => `${l.id}:${l.original.length}:${l.translated?.length ?? 0}`).join('~')
+      `${mode}|${style.maxLines}|p:${partial?.text ?? ''}:${partial?.stableLen ?? 0}:${partial?.translated?.length ?? 0}|` +
+      snap.finals.map((l) => `${l.id}:${l.original.length}:${l.translated?.length ?? 0}`).join('~')
     if (key === lastRenderKey) return
     lastRenderKey = key
 
-    const visible = lines.slice(-Math.max(1, style.maxLines))
+    const visible = snap.finals
     listEl.textContent = ''
     for (const l of visible) {
       const g = document.createElement('div')
@@ -436,7 +432,15 @@ registerProcessor('livesub-pcm', PcmCollector)
       g.className = 'group partial'
       const o = document.createElement('div')
       o.className = 'orig'
-      o.textContent = partial.text
+      if (partial.stableLen > 0 && partial.stableLen < partial.text.length) {
+        o.appendChild(document.createTextNode(partial.text.slice(0, partial.stableLen)))
+        const tail = document.createElement('span')
+        tail.className = 'tail'
+        tail.textContent = partial.text.slice(partial.stableLen)
+        o.appendChild(tail)
+      } else {
+        o.textContent = partial.text
+      }
       g.appendChild(o)
       if (partial.translated) {
         const t = document.createElement('div')
@@ -511,8 +515,7 @@ registerProcessor('livesub-pcm', PcmCollector)
       lastLayout = ''
       startLoop()
     } else {
-      lines = []
-      partial = null
+      caption.clear()
       lastRenderKey = ''
       if (listEl) listEl.textContent = ''
       hideHost()
@@ -520,20 +523,15 @@ registerProcessor('livesub-pcm', PcmCollector)
     render()
   }
 
-  function addOriginal(id: string, text: string, lang: string): void {
+  function addOriginal(id: string, text: string, _lang: string): void {
     if (!running) setRunning(true)
-    if (lines.some((l) => l.id === id)) return
-    lines.push({ id, original: text, lang })
-    // 只保留最近的若干组，避免 DOM 无限增长
-    if (lines.length > 12) lines = lines.slice(-12)
+    caption.addFinal(id, text)
     lastRenderKey = ''
     render()
   }
 
   function addTranslation(id: string, text: string): void {
-    const line = lines.find((l) => l.id === id)
-    if (!line) return
-    line.translated = text
+    caption.setTranslation(id, text)
     lastRenderKey = ''
     render()
   }
@@ -541,6 +539,7 @@ registerProcessor('livesub-pcm', PcmCollector)
   // ---------- 设置 ----------
   function applySettings(s: any): void {
     if (s?.subtitleStyle) style = { ...DEFAULT_STYLE, ...s.subtitleStyle }
+    caption.setMaxLines(style.maxLines)
     if (s?.subtitleMode) mode = s.subtitleMode
     lastLayout = ''
     lastRenderKey = ''
@@ -568,16 +567,16 @@ registerProcessor('livesub-pcm', PcmCollector)
         setRunning(!!msg.running)
         return
       case 'subtitle-original':
-        partial = null
+        caption.clearPartial()
         if (msg.text) addOriginal(String(msg.id), String(msg.text), String(msg.lang ?? ''))
         return
       case 'subtitle-partial':
         if (!msg.text) return
-        partial = {
-          text: String(msg.text),
-          translated: msg.zh ? String(msg.zh) : undefined,
-          lang: String(msg.lang ?? ''),
-        }
+        caption.setPartial(
+          String(msg.text),
+          msg.zh ? String(msg.zh) : undefined,
+          String(msg.lang ?? ''),
+        )
         lastRenderKey = ''
         if (!running) setRunning(true)
         render()
@@ -593,8 +592,7 @@ registerProcessor('livesub-pcm', PcmCollector)
         sendResponse({ ok: true })
         return
       case 'subtitle-clear':
-        lines = []
-        partial = null
+        caption.clear()
         lastRenderKey = ''
         render()
         return

@@ -25,6 +25,7 @@ const LANG = getArg('--lang', 'ja')
 const DUR = Number(getArg('--dur', 120))
 const MODE = getArg('--mode', 'file') // file: 绕过 tabCapture 喂本地音频；popup: 真实点击开始（需要真人授予 activeTab）
 const MODEL = getArg('--model', 'sensevoice')
+const GLOSSARY = getArg('--glossary', '')
 const PAGE_URL = getArg('--url', `http://127.0.0.1:${PORT}/`)
 const IS_LOCAL_PAGE = PAGE_URL.includes(`127.0.0.1:${PORT}`)
 const KEEP = argv.includes('--keep')
@@ -471,7 +472,7 @@ if (MODE === 'popup') {
       if (!tab?.id) return 'no-tab'
       await chrome.storage.session.set({ cap: { capturing: true, tabId: tab.id } })
       const got = await chrome.storage.sync.get('settings')
-      const settings = { ...(got.settings ?? {}), asrModel: '${MODEL}' }
+      const settings = { ...(got.settings ?? {}), asrModel: '${MODEL}', glossary: ${JSON.stringify(GLOSSARY)} }
       const url = 'http://127.0.0.1:${PORT}/media/${LANG}.m4a'
       const res = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'start-test', url, tabId: tab.id, settings })
       return JSON.stringify({ tabId: tab.id, res })
@@ -571,7 +572,7 @@ while (Date.now() - t0 < DUR * 1000) {
   const newest = lines[0]
   log(
     `t+${Math.round((Date.now() - t0) / 1000)}s state=${dbg?.state} audio=${dbg?.audioMode ?? '?'} coi=${dbg?.crossOriginIsolated} threads=${dbg?.wasmThreads} ` +
-      `rms=${dbg?.lastRms?.toFixed(4)} vad=${dbg?.vad} partials=${dbg?.partials}/${dbg?.partialsZh} lang=${dbg?.activeLang} segs=${dbg?.stats?.segments}`,
+      `rms=${dbg?.lastRms?.toFixed(4)} vad=${dbg?.vad} words=${dbg?.words} partials=${dbg?.partials}/${dbg?.partialsZh} lang=${dbg?.activeLang} segs=${dbg?.stats?.segments}`,
   )
   if (newest && lines.length > lastLineCount) {
     lastLineCount = lines.length

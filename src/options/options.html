@@ -35,6 +35,11 @@
           <b id="vad-val"></b>
         </label>
         <p class="hint">值越大越容易触发断句（小声说话建议调高，背景音乐嘈杂建议调低）。</p>
+        <label class="row" style="align-items: flex-start">
+          <span>术语表 / 纠错</span>
+          <textarea id="glossary" rows="3" placeholder="每行一个；错=对 会替换，例如：盛り明=森保"></textarea>
+        </label>
+        <p class="hint">识别后按行替换，适合人名、队名、专有名词。只写词（不带 =）暂不作为热词参与解码。</p>
       </section>
 
       <section>
@@ -70,6 +75,7 @@
             <option value="3">3 组</option>
           </select>
         </label>
+        <p class="hint">临时字幕会占一组，所以有 partial 时正式行会少一组。</p>
       </section>
 
       <section>

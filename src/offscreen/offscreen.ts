@@ -97,6 +97,22 @@ function engineDeviceLabel(): string {
   return engine === 'sensevoice' ? `sensevoice(${svDevice()})` : asrDevice()
 }
 
+function applyGlossary(text: string): string {
+  const raw = settings.glossary.trim()
+  if (!raw || !text) return text
+  let out = text
+  for (const line of raw.split('\n')) {
+    const item = line.trim()
+    const eq = item.indexOf('=')
+    if (eq < 0) continue
+    const from = item.slice(0, eq).trim()
+    const to = item.slice(eq + 1).trim()
+    if (!from || from === to) continue
+    out = out.split(from).join(to)
+  }
+  return out
+}
+
 function engineReady(): boolean {
   return engine === 'sensevoice' ? svReady() : modelReady()
 }
@@ -145,6 +161,7 @@ function resetSession(): void {
   partialBusy = false
   partialsSent = 0
   partialsZh = 0
+  lastWords = 0
 }
 
 function segmentHandler(pcm: Float32Array, endedAt: number): void {
@@ -302,6 +319,7 @@ async function teardown(): Promise<void> {
   partialBusy = false
   partialsSent = 0
   partialsZh = 0
+  lastWords = 0
   draining = false
   translating = false
   playbackOk = false
@@ -331,6 +349,7 @@ let lastPartialText = ''
 let partialBusy = false
 let partialsSent = 0
 let partialsZh = 0
+let lastWords = 0
 // 正式句子一出来就作废还在跑的 partial，避免旧临时字幕盖住正式字幕
 let partialGen = 0
 
@@ -372,22 +391,23 @@ async function maybePartial(pcm: Float32Array | null): Promise<void> {
     const runLang = settings.sourceLang === 'auto' ? (activeLang ?? 'auto') : settings.sourceLang
     const res = await transcribeSenseVoice(input, runLang)
     if (!running || gen !== partialGen || !res.text) return
-    if (res.text === lastPartialText) return
+    const rawText = applyGlossary(res.text)
+    if (rawText === lastPartialText) return
     // 临时字幕也补中文（翻译模型已热时才做，避免拖慢）
     const lineLang = res.lang || activeLang || ''
     let zh = ''
     if (lineLang && translationSupported(lineLang) && translatorReady(lineLang) && !translating && !transQueue.length) {
       try {
-        zh = collapseRepeats(await translateText(res.text, lineLang)).trim()
+        zh = collapseRepeats(await translateText(rawText, lineLang)).trim()
       } catch {
         zh = ''
       }
     }
     if (!running || gen !== partialGen) return
-    lastPartialText = res.text
+    lastPartialText = rawText
     partialsSent++
     if (zh) partialsZh++
-    send({ target: 'event', type: 'asr-partial', text: res.text, zh: zh || undefined, lang: lineLang || undefined })
+    send({ target: 'event', type: 'asr-partial', text: rawText, zh: zh || undefined, lang: lineLang || undefined })
   } catch {
     // partial 失败不影响正式字幕
   } finally {
@@ -447,13 +467,20 @@ async function resolveLanguage(pcm: Float32Array): Promise<boolean> {
   return false
 }
 
-function emitLine(text: string, lang: string, endedAt: number, asrMs: number): void {
+function emitLine(
+  text: string,
+  lang: string,
+  endedAt: number,
+  asrMs: number,
+  words?: { text: string; start: number; end: number }[],
+): void {
+  lastWords = words?.length ?? 0
   partialGen++
   lastPartialText = ''
   const id = `seg-${segSeq++}`
   lastLines.unshift({ id, original: text, lang, asrMs })
   lastLines = lastLines.slice(0, 8)
-  send({ target: 'event', type: 'asr-final', id, text, lang, asrMs })
+  send({ target: 'event', type: 'asr-final', id, text, lang, asrMs, words })
   send({ target: 'event', type: 'stats', stats: snapshotStats() })
   // 原文已上屏，译文丢进独立队列异步补齐
   if (lang !== 'zh' && translationSupported(lang)) {
@@ -473,7 +500,7 @@ async function processSegment(item: { pcm: Float32Array; endedAt: number }): Pro
   cap(stats.asr)
   stats.segments++
   if (!text) return
-  emitLine(text, lang, item.endedAt, asrMs)
+  emitLine(applyGlossary(text), lang, item.endedAt, asrMs)
 }
 
 async function drain(): Promise<void> {
@@ -501,7 +528,7 @@ async function drain(): Promise<void> {
           send({ target: 'event', type: 'detected-lang', lang })
           if (translationSupported(lang)) void warmTranslator(lang).catch(() => {})
         }
-        emitLine(res.text, lang, item.endedAt, asrMs)
+        emitLine(applyGlossary(res.text), lang, item.endedAt, asrMs, res.words)
         continue
       }
 
@@ -790,6 +817,7 @@ chrome.runtime.onMessage.addListener((msg: any, _sender, sendResponse) => {
   audioState: audioCtx?.state ?? 'closed',
   asrReady,
   vad: vadKind,
+  words: lastWords,
   activeLang,
   partials: partialsSent,
   partialsZh,
