@@ -56,7 +56,7 @@ B 站 2023 年公开过一篇《语音识别技术在 B 站的落地实践》（
   区分性训练后边界会更平滑——这也是 B 站 AI 字幕正文只有 cue 级 `from/to`、没有词级时间的原因之一。
 - **流式**：文章把「结合流式 ASR，支持游戏/体育赛事实时字幕」列为后续方向；S12 直播用了 ASR，但不是今天这种通用实时字幕 API。
 
-2025/2026 年 B 站又公开了 **Index-ASR**（技术报告 arXiv:2601.00890）：
+2025/2026 年 B 站公开了 **Index-ASR** 技术报告（arXiv:2601.00890；社区文章称已开源，模型发布以官方仓库为准）：
 
 - 架构：Conformer audio encoder + adapter + **Qwen3-8B** LLM decoder；
 - 能力：中文/英文，强噪声鲁棒，支持 **hotword/context**（用户给术语表/摘要，显著提升专有名词）；
@@ -80,7 +80,7 @@ B 站 AI 字幕的**产物**是 cue 级 JSON（`from/to/content`），由服务�
 | 层 | 能不能用 | 说明 |
 |---|---|---|
 | 他们的云端 ASR/翻译服务 | ❌ | YouTube 不对外开放任意视频的 ASR；B 站 AI 字幕/必剪是内部/风控接口；官方 API 需要视频所有权或登录 |
-| 他们开源的模型 | ⚠️ 技术上能，产品上不行 | Index-ASR 是 Qwen3-8B、中文/英文、非流式、GPU；Index-Translate 同样是 LLM；浏览器/日语场景都不合适 |
+| 他们的 Index 模型 | ⚠️ 技术上能，产品上不行 | Index-ASR 是 Qwen3-8B、中文/英文、非流式、GPU（发布状态以官方仓库为准）；Index-Translate 同样是 LLM；浏览器/日语场景都不合适 |
 | 他们的字幕产物 | ✅ 有条件下 | B 站 `dm-view` 匿名可拿；YouTube 只能 DOM/TV client，见下文 |
 | 他们的 pipeline 架构 | ✅ 部分 | 我们已有 VAD + CTC（SenseVoice）+ 翻译 + 覆盖层；缺词级时间、热词、两行滚动、流式 |
 | 他们的 UX | ✅ | 两行滚动、词级高亮、CC 样式、翻译预取/缓存 |
@@ -119,7 +119,7 @@ B 站 AI 字幕的**产物**是 cue 级 JSON（`from/to/content`），由服务�
 5. **流式 ASR**：他们的直播字幕是流式；我们当前是 VAD 分段 + partial。真要追平，需要换 streaming 模型，
    这是下一个大台阶，不是靠调 VAD 能解决的。
 
-### A.3 参考
+### B.3 参考
 
 - B 站 ASR 落地实践（2023，SpeechHome 转载）：
   https://www.speechhome.com/blogs/news/1633301196309663744
