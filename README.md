@@ -181,6 +181,12 @@ sherpa-onnx 官方 CLI 基本一致（`scripts/sensevoice-frontend.mjs`），因
 另外已启用的优化：manifest 里加了 COOP/COEP，扩展页 `crossOriginIsolated=true`，
 ort-web 用 4 个 WASM 线程，Whisper base 在浏览器里从 ~2.9s 降到 ~1.1s。
 
+## 平台字幕调研
+
+YouTube / Bilibili 自带字幕（人工 CC、YouTube Gemini 自动字幕、B站 AI 字幕）的接口、格式、
+实测可用性与「平台优先 + 本地 ASR 兜底」的落地方案，见
+[docs/platform-subtitles.md](docs/platform-subtitles.md)。
+
 ## 安全与隐私
 
 - **全本地、零上传**：音频只在扩展进程内处理，不写盘、不上传；运行时不会向外部服务器发请求
